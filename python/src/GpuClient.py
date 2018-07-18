@@ -1,9 +1,10 @@
-from Common import *
+from common import Request, Response, Status, Command
 import sys
-import json
 import socket
 import time
+import struct
 import numpy as np
+import binascii
 
 class GpuClient:
     """
@@ -72,7 +73,7 @@ class GpuClient:
         # This call will block until the server has finished processing the
         # request and has sent a response.
         resp = Response()
-        buf = Client.__recvall(self.sock, resp.header_size)
+        buf = GpuClient.__recvall(self.sock, resp.header_size)
         
         # Verify the buffer was received.
         if buf is None:
@@ -83,15 +84,19 @@ class GpuClient:
 
         # Check for bad status.            
         if resp.status != Status.SUCCESS:
+            # Close the connection.
+            self.close()
+            
+            # Raise the error received.
             raise IOError("Nearist error: %s " % Status(resp.status))
         
         # If the response includes a payload, receive it.
         if resp.body_length > 0:
             # Receive the body of this response.
-            resp.body = Client.__recvall(self.sock, resp.body_length)
+            resp.body = GpuClient.__recvall(self.sock, resp.body_length)
 
             # Receive the body checksum
-            checksum = Client.__recvall(self.sock, 4)
+            checksum = GpuClient.__recvall(self.sock, 4)
 
             # Verify the checksum.
             if not checksum == struct.pack("=L", binascii.crc32(resp.body) & 0xFFFFFFFF):
@@ -194,8 +199,7 @@ class GpuClient:
                   column per nearest neighbor.
         """
         
-        start = 0
-        results = []
+        
         
         # Record the start time.
         t0 = time.time()
@@ -204,38 +208,13 @@ class GpuClient:
         self.server_elapsed = 0
         self.client_elapsed = 0
         
-        # Transmit the queries in mini-batches in order to avoid memory errors
-        # and to get progress updates.
         
-        D_all = np.zeros((0, k))
-        I_all = np.zeros((0, k), dtype='int32')
+        # =================================
+        #       Handle single queries 
+        # =================================
         
-        # For each mini-batch...
-        while start < vectors.shape[0]:
-            # Calculate the 'end' of this mini-batch.
-            end = min(start + batch_size, len(vectors))
-
-            # Select the vectors in this mini-batch.
-            mini_batch = vectors[start:end]
-
-            # Progress update.
-            if verbose and not start == 0:
-                # Caclulate the average throughput so far.
-                queries_per_sec = ((time.time() - t0)  / start)
-                
-                # Estimate how much time (in seconds) is left to complete the 
-                # test.
-                time_est = queries_per_sec * (len(vectors) - start)
-                
-                # Format the estimated time remaining into minutes.
-                if time_est < 90:
-                    time_est_str = '~%.0f sec...' % time_est
-                else:
-                    time_est_str = '~%.0f min...' % (time_est / 60.0)
-
-                print('  Query %5d / %5d (%3.0f%%) Time Remaining: %s' % (start, len(vectors), float(start) / len(vectors) * 100.0, time_est_str))
-                sys.stdout.flush()
-            
+        # If 'vectors' is just a single query vector...
+        if vectors.ndim == 1:
             # Construct the query request.
             req = Request(
                 api_key = self.api_key,
@@ -243,33 +222,96 @@ class GpuClient:
                 k = k
             )
             
-            # Add the vectors.
-            req.pack_vectors(mini_batch)
+            # Add the vector.
+            req.pack_vectors(vectors)
         
             # Submit the query and wait for the results.
             resp = self.__request(req)
-
-            # Accumulate the total time spent on the server.
-            self.server_elapsed += resp.elapsed
             
             # Unpack the results and return them.
             D, I = resp.unpack_results()
-            
-            if not len(mini_batch) == I.shape[0]:
-                print('ERROR: Mini batch length %d does not match results legnth %d!' % (len(mini_batch), I.shape[0]))
-                sys.stdout.flush()
-            
-            # Accumulate the results.
-            D_all = np.concatenate((D_all, D))
-            I_all = np.concatenate((I_all, I))
-            
-            # Update the start pointer.
-            start = end
 
-        # Store the total elapsed time from the client perspective.
-        self.client_elapsed = time.time() - t0
+            return D, I
         
-        return D_all, I_all
+        # =================================
+        #       Handle multiple queries 
+        # =================================
+        elif vectors.ndim == 2:
+            # Transmit the queries in mini-batches in order to avoid memory errors
+            # and to get progress updates.
+            
+            # Record the total number of query vectors.                       
+            num_vecs = vectors.shape[1]
+            
+            D_all = np.zeros((0, k))
+            I_all = np.zeros((0, k), dtype='int32')
+            
+            start = 0
+            
+            # For each mini-batch...
+            while start < num_vecs:
+                # Calculate the 'end' of this mini-batch.
+                end = min(start + batch_size, num_vecs)
+    
+                # Select the vectors in this mini-batch.
+                mini_batch = vectors[start:end, :]
+    
+                # Progress update.
+                if verbose and not start == 0:
+                    # Caclulate the average throughput so far.
+                    queries_per_sec = ((time.time() - t0)  / start)
+                    
+                    # Estimate how much time (in seconds) is left to complete the 
+                    # test.
+                    time_est = queries_per_sec * (len(vectors) - start)
+                    
+                    # Format the estimated time remaining into minutes.
+                    if time_est < 90:
+                        time_est_str = '~%.0f sec...' % time_est
+                    else:
+                        time_est_str = '~%.0f min...' % (time_est / 60.0)
+    
+                    print('  Query %5d / %5d (%3.0f%%) Time Remaining: %s' % (start, len(vectors), float(start) / len(vectors) * 100.0, time_est_str))
+                    sys.stdout.flush()
+                
+                # Construct the query request.
+                req = Request(
+                    api_key = self.api_key,
+                    command = Command.QUERY,
+                    k = k
+                )
+                
+                # Add the vectors.
+                req.pack_vectors(mini_batch)
+            
+                # Submit the query and wait for the results.
+                resp = self.__request(req)
+    
+                # Accumulate the total time spent on the server.
+                self.server_elapsed += resp.elapsed
+                
+                # Unpack the results and return them.
+                D, I = resp.unpack_results()
+                
+                if not len(mini_batch) == I.shape[0]:
+                    print('ERROR: Mini batch length %d does not match results legnth %d!' % (len(mini_batch), I.shape[0]))
+                    sys.stdout.flush()
+                
+                # Accumulate the results.
+                D_all = np.concatenate((D_all, D))
+                I_all = np.concatenate((I_all, I))
+                
+                # Update the start pointer.
+                start = end
+    
+            # Store the total elapsed time from the client perspective.
+            self.client_elapsed = time.time() - t0
+            
+            return D_all, I_all
+        
+        # If vectors.ndim is not 1 or 2, then somethings wrong with it.
+        else:
+            raise IOError("'vectors' argument has wrong number of dimensions!")
         
     def print_timings(self):
         """
