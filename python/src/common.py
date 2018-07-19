@@ -34,9 +34,7 @@ class Status(IntEnum):
     DATASET_NOT_FOUND = 0x21
     DATASET_SIZE_NOT_SUPPORTED = 0x22
     QUERY_SIZE_NOT_SUPPORTED = 0x23
-    DISTANCE_MODE_NOT_SUPPORTED = 0x24
-    QUERY_MODE_NOT_SUPPORTED = 0x25
-    READ_COUNT_NOT_SUPPORTED = 0x26
+    NO_DATASET_LOADED = 0x24
     UNKNOWN_ERROR = 0xFF
 
 
@@ -281,6 +279,14 @@ class Response:
        
         # Store the dimensions of the results matrices first. 
         self.body = struct.pack("=LL", distances.shape[0], distances.shape[1])
+       
+        if not distances.dtype == 'float32':
+            print('WARNING: Distances matrix was not float32, converting.')
+            distances = distances.astype('float32')
+        
+        if not indeces.dtype == 'int32':
+            print('WARNING: Indeces matrix was not int32, converting.')
+            indeces = indeces.astype('int32')
        
         # Use built in numpy methods to dump the results to bytes.
         self.body += distances.tobytes() + indeces.tobytes()
