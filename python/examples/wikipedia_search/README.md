@@ -15,7 +15,7 @@ In order to run these examples, you will need the following dataset files downlo
 <table>
   <tr>  <th>File</th>               <th>Size</th>    <th>Description</th>   </tr>
  
-  <tr>  <td><a href="">lsi_index_float32.h5</a></td>   <td>4.7 GB</td>   <td>LSI vectors for every article in Wikipedia. ~4.2 million rows with 300 features each.</td>    </tr>
+  <tr>  <td><a href="https://drive.google.com/a/nearist.ai/file/d/1dNUxJVZSc9oQxuQp2ot1W2m4mdU-9qXl/view?usp=sharing">lsi_index_float32.h5</a></td>   <td>4.7 GB</td>   <td>LSI vectors for every article in Wikipedia. ~4.2 million rows with 300 features each.</td>    </tr>
   
   <tr>  <td><a href="https://drive.google.com/open?id=1wCg61RgNc0LbMjePSZUBUIxg1T46FujY">titles_to_id.pickle</a></td>   <td>130 MB</td>  <td>Dictionary for looking up the ID of an article with a given title.
 </td>    </tr>  
