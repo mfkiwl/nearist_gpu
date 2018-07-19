@@ -231,6 +231,11 @@ class GpuClient:
             # Unpack the results and return them.
             D, I = resp.unpack_results()
 
+            # Record the time spent on the server and the total time observed
+            # by the client.
+            self.server_elapsed = resp.elapsed
+            self.client_elapsed = time.time() - t0
+
             return D, I
         
         # =================================
@@ -241,7 +246,7 @@ class GpuClient:
             # and to get progress updates.
             
             # Record the total number of query vectors.                       
-            num_vecs = vectors.shape[1]
+            num_vecs = vectors.shape[0]
             
             D_all = np.zeros((0, k))
             I_all = np.zeros((0, k), dtype='int32')
@@ -312,7 +317,35 @@ class GpuClient:
         # If vectors.ndim is not 1 or 2, then somethings wrong with it.
         else:
             raise IOError("'vectors' argument has wrong number of dimensions!")
+    
+    def query_from_file(self, file_name, dataset_name, k=10, batch_size=1024):
+        """
+        Perform a batch query using query vectors stored in a file on the 
+        server.
         
+        #Specify specific query vector IDs in the 'ids' list, or leave it empty
+        #to perform all queries in the file.
+        """
+        # Record the start time.
+        t0 = time.time()
+        
+        # Construct a load request.
+        req = Request(
+            api_key = self.api_key,
+            command = Command.QUERY_FROM_FILE,
+        )
+
+        # Send the filename and dataset name as the packet payload.
+        req.pack_json({"fileName": file_name, "datasetName": dataset_name, "k": k, "batchSize": batch_size})
+        
+        # Submit the request (__request handles the response status).
+        resp = self.__request(req)
+        
+        # Record the elapsed server time, and the elapsed time from the 
+        # client's perspective.
+        self.server_elapsed = resp.elapsed
+        self.client_elapsed = time.time() - t0
+    
     def print_timings(self):
         """
         Print the timing measurements from the previous command.
