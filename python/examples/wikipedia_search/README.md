@@ -34,6 +34,8 @@ Loading the dataset, both locally and on the remote server, is somewhat time con
 You may run the script within your favorite Python IDE, or, run from a Python terminal with the command ```exec(open("query_wikipedia_live.py").read(), globals())```
 
 ### Expected Output - query_wikipedia_live
+The following output was generated on an Amazon P2 instance with a single Tesla K80. 
+
 ```
 Connecting to Nearist server...
     Connection successful.
@@ -63,6 +65,8 @@ Timing breakdown:
         Total: 184 ms
 ```
 
+The server time with a Tesla V100 is about 22ms (almost 4x faster!).
+
 ### Expected Output - wikipedia_knn_graph.py
 The following output was generated on an Amazon P3 instance with a single Tesla V100 GPU.
 
@@ -86,3 +90,23 @@ Writing results to local disk...
 Done.
 ```
 
+### Expected Output - query_wikipedia_graph.py
+Looking up the results in the pre-computed knn graph is nearly instantaneous.
+```
+Finding most similar articles to "Water treatment"...
+
+                                                 Title    Distance
+                                                 =====    ========
+                            Industrial water treatment    0.025
+                                        Drinking water    0.042
+                                             Raw water    0.051
+                                       Reclaimed water    0.051
+                                    Water chlorination    0.056
+                                          Water bottle    0.056
+                                    Water purification    0.057
+                                 Groundwater pollution    0.060
+                                        Purified water    0.064
+                  Water issues in developing countries    0.064
+
+knn graph lookup took 2 ms.
+```
