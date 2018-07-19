@@ -87,7 +87,7 @@ if not local_loaded:
 # ==================================
 #       Load the query vector
 # ==================================
-print 'Retrieving local query vector...'
+print('Retrieving local query vector...')
     
 # Verify the specified article title is valid.
 if not query_article in title_to_idx:        
