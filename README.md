@@ -14,15 +14,13 @@ Please visit the [wiki](https://github.com/nearist/nearist/wiki) for documentati
 
 You will have to obtain an API key in order to gain access to Nearist servers. 
 
-Once you have done this, you can install the client library with pip:
+To install, clone this repository and add the `/nearist_gpu/python/src/` directory to your `PYTHONPATH`.
 
-`pip install nearist_gpu`
-
-or you can clone this repository. If you choose to clone this repository make sure to add the /python/src/ directory to your PYTHONPATH and to update the scripts in `python/examples` to include the API access key and supplied IP address.
+To run any of the examples, you'll need to edit the example script to specify your API access key and supplied IP address.
 
 ## API: At a Glance
 
-Below is the basic usage for starting up the server, loading your data, setting parameters, and returning results.
+Below is the basic usage for connecting to the server, loading your data, and performing a k-NN search.
 
 ```python
  1: # Import the Python API
