@@ -63,3 +63,26 @@ Timing breakdown:
         Total: 184 ms
 ```
 
+### Expected Output - wikipedia_knn_graph.py
+The following output was generated on an Amazon P3 instance with a single Tesla V100 GPU.
+
+```
+Connecting to Nearist server...
+    Connection successful.
+
+Loading dataset vectors from remote server into GPU...
+Performing a test query to estimate throughput...
+GPU throughput (w/ batch size of 1024) is 4504 queries per second.
+Estimated time to complete the knn graph: 16 min
+
+Running knn-table for 4198780 vectors, batch_size 1024, with k=11...
+
+Timing breakdown:
+  Server Time: 20.6 min
+     Overhead: 1.2 min
+        Total: 21.8 min
+
+Writing results to local disk...
+Done.
+```
+
