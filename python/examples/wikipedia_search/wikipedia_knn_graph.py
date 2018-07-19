@@ -102,16 +102,16 @@ c.close()
 #      Store the results
 # ==============================
 
-# Print out the first ten distances and idx to confirm 
-print(str(dists[0:10, 0]))
-print(str(idxs[0:10, 0]))
-
 # Delete column 0 from the results                                
 np.delete(dists, 0, axis=1)
 np.delete(idxs, 0, axis=1)
+
+print('Writing results to local disk...')
 
 # Write out the two matrices to an HDF5 file.
 h5f = h5py.File(output_on_local_drive, 'w')
 h5f.create_dataset(name='dists', data=dists)
 h5f.create_dataset(name='idxs', data=idxs)
 h5f.close()
+
+print('Done')
