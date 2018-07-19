@@ -340,11 +340,16 @@ class GpuClient:
         
         # Submit the request (__request handles the response status).
         resp = self.__request(req)
+
+        # Unpack the results.
+        D, I = resp.unpack_results()
         
         # Record the elapsed server time, and the elapsed time from the 
         # client's perspective.
         self.server_elapsed = resp.elapsed
         self.client_elapsed = time.time() - t0
+        
+        return D, I
     
     def print_timings(self):
         """
@@ -361,7 +366,11 @@ class GpuClient:
             print("  Server Time: %0.0f ms" % (self.server_elapsed * 1000))
             print("     Overhead: %0.0f ms" % ((self.client_elapsed - self.server_elapsed) * 1000))
             print("        Total: %0.0f ms" % (self.client_elapsed * 1000))
-        else:
+        elif self.server_elapsed < 120.0:
             print("  Server Time: %0.1f sec" % self.server_elapsed)
             print("     Overhead: %0.1f sec" % (self.client_elapsed - self.server_elapsed))
             print("        Total: %0.1f sec" % self.client_elapsed)
+        else:
+            print("  Server Time: %0.1f min" % (self.server_elapsed / 60.0))
+            print("     Overhead: %0.1f min" % ((self.client_elapsed - self.server_elapsed) / 60.0))
+            print("        Total: %0.1f min" % (self.client_elapsed / 60.0))
