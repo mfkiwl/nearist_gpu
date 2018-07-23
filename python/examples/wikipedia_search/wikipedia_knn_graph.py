@@ -9,7 +9,7 @@ from gpuclient import GpuClient
 # ==============================
 
 # Connection parameters
-api_key = "apikey"
+api_key = ""
 nearist_port = 0
 nearist_ip = ""
 
@@ -35,69 +35,82 @@ k = 11
 print('Connecting to Nearist server...')
 
 c = GpuClient()
-c.open(nearist_ip, nearist_port, api_key)
 
-print('    Connection successful.\n')
+# Always use the GpuClient inside a with statement--this ensures that the
+# connection can be properly closed even if an exception is thrown.
+with c.open(nearist_ip, nearist_port, api_key):
 
-# ==============================
-#       Load the dataset
-# ==============================
-# Set the 'loaded' flag to 'True' after the first run of this script so that
-# you don't have to load anything again.
-loaded = False
-if not loaded:
-    print('Loading dataset vectors from remote server into GPU...')
-
-    # Load dataset into GPU memory.
-    c.load_dataset_file(file_name=path_on_nearist_server, dataset_name='lsi')
-
-# ==============================
-#      Measure Throughput
-# ==============================
-
-print('Performing a test query to estimate throughput...')
-
-# Use a handful of batches to estimate throughput.
-test_batch_size = 4 * batch_size
-
-# Open the local copy of the dataset file.
-h5f = h5py.File(path_on_local_drive, 'r')
-
-# Read the first four batches of the Wikipedia vectors into local memory.
-vectors = h5f['lsi'][0:test_batch_size, :]
-
-# Perform a query on the first four batches.
-dists, idxs = c.query(vectors, k=k, batch_size=batch_size)
+    print('    Connection successful.\n')
     
-# Measure the GPU throughput (queries per second) based on this test.
-# We don't need to include internet overhead in this measurement because the
-# query vectors for the knn table are already on the remote server.
-throughput = test_batch_size / c.server_elapsed
+    # ==============================
+    #       Load the dataset
+    # ==============================
+    # Set the 'loaded' flag to 'True' after the first run of this script so that
+    # you don't have to load anything again.
+    loaded = True
+    if not loaded:
+        print('Loading dataset vectors from remote server into GPU...')
+    
+        # Load dataset into GPU memory.
+        c.load_dataset_file(
+            file_name = path_on_nearist_server,  # Remote file path
+            dataset_name = 'lsi'  # Dataset name within HDF5 file
+        )
+    
+    # ==============================
+    #      Measure Throughput
+    # ==============================
 
-# Estimate the time to complete the whole graph in minutes
-est_graph_time = h5f['lsi'].shape[0] / throughput / 60.0
-
-print('GPU throughput (w/ batch size of %d) is %.0f queries per second.' % (batch_size, throughput))
-print('Estimated time to complete the knn graph: %.0f min\n' % est_graph_time)
-
-# ==============================
-#      Compute 10-NN graph
-# ==============================
-print('Running knn-table for %d vectors, batch_size %d, with k=%d...' % (h5f['lsi'].shape[0], batch_size, k))
-sys.stdout.flush()
-
-# Specify the dataset file on the Nearist GPU server to read the query vectors 
-# from.
-dists, idxs = c.query_from_file(file_name=path_on_nearist_server,
-                                dataset_name='lsi',
-                                k=k, batch_size=batch_size)
-
-# Print out the measured timings.
-c.print_timings()
-
-# Close the server connection
-c.close()
-
+    print('Performing a test query to estimate throughput...')
+    
+    # Use a handful of batches to estimate throughput.
+    test_batch_size = 4 * batch_size
+    
+    # Open the local copy of the dataset file.
+    h5f = h5py.File(path_on_local_drive, 'r')
+    
+    # Read the first four batches of the Wikipedia vectors into local 
+    # memory.
+    vectors = h5f['lsi'][0:test_batch_size, :]
+    
+    # Perform a query on the first four batches.
+    dists, idxs = c.query(vectors, k=k, batch_size=batch_size)
+        
+    # Measure the GPU throughput (queries per second) based on this test.
+    # We don't need to include internet overhead in this measurement because
+    # the query vectors for the knn table are already on the remote server.
+    throughput = test_batch_size / c.server_elapsed
+    
+    # Estimate the time to complete the whole graph in minutes
+    est_graph_time = h5f['lsi'].shape[0] / throughput / 60.0
+    
+    print('GPU throughput (w/ batch size of %d) is %.0f queries \
+          per second.' % (batch_size, throughput))
+    print('Estimated time to complete the knn graph: \
+          %.0f min\n' % est_graph_time)
+    
+    # ==============================
+    #      Compute 10-NN graph
+    # ==============================
+    print('Running knn-table for %d vectors, batch_size %d, \
+          with k=%d...' % (h5f['lsi'].shape[0], batch_size, k))
+    sys.stdout.flush()
+    
+    # Specify the dataset file on the Nearist GPU server to read the query 
+    # vectors from.
+    dists, idxs = c.query_from_file(
+        file_name = path_on_nearist_server,  # Remote file path
+        dataset_name = 'lsi',                # Dataset name within HDF5 file
+        k = k,                               # Number of neighbors
+        batch_size = batch_size              # Query batch size to use
+    )
+    
+    # Print out the measured timings.
+    c.print_timings()
+    
+    # Close the server connection (this is redundant to 'with', but fine).
+    c.close()
+    
 # ==============================
 #      Store the results
 # ==============================
@@ -113,5 +126,5 @@ h5f = h5py.File(output_on_local_drive, 'w')
 h5f.create_dataset(name='dists', data=dists)
 h5f.create_dataset(name='idxs', data=idxs)
 h5f.close()
-
+    
 print('Done')

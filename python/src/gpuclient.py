@@ -20,7 +20,24 @@ class GpuClient:
         # These variables hold the elapsed time of the previous action.
         self.server_elapsed = 0
         self.client_elapsed = 0
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        """
+        Called on leaving the 'with' block, whether or not there is an 
+        exception. Ensures that the connection is closed properly.
+        """
+        # Close the connection.
+        self.close()
         
+        # Return False if there is an exception to re-raise it.
+        if traceback:
+            return False
+        # Return True if there was no exception.
+        else:
+            return True
 
     @staticmethod
     def __recvall(sock, length):
@@ -133,6 +150,8 @@ class GpuClient:
 
         # Store the API key        
         self.api_key = api_key
+        
+        return self
 
     def close(self):
         """
