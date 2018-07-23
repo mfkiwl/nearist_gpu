@@ -199,15 +199,16 @@ class GpuClient:
                   column per nearest neighbor.
         """
         
-        
-        
         # Record the start time.
         t0 = time.time()
         
+        # Validate the type of the vectors object.
+        if not type(vectors) == np.ndarray:
+            raise IOError("Query vectors should be of type numpy.ndarray")
+        
         # Reset the elapsed time measurements.
         self.server_elapsed = 0
-        self.client_elapsed = 0
-        
+        self.client_elapsed = 0       
         
         # =================================
         #       Handle single queries 
@@ -247,6 +248,10 @@ class GpuClient:
             
             # Record the total number of query vectors.                       
             num_vecs = vectors.shape[0]
+
+            # Verify there's at least one vector.
+            if num_vecs == 0:
+                raise IOError("Number of query vectors cannot be zero!")
             
             D_all = np.zeros((0, k))
             I_all = np.zeros((0, k), dtype='int32')

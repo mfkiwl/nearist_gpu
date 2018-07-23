@@ -17,7 +17,7 @@ class Command(IntEnum):
 
 class Status(IntEnum):
     """
-    
+    Statuses returned by the server
     """
     SUCCESS = 0x00
     INVALID_SEQUENCE = 0x01
@@ -31,7 +31,7 @@ class Status(IntEnum):
     INVALID_API_KEY = 0x09
     DIFFERENT_VECTOR_LENGTH = 0x10 # When query vectors don't match dataset
     DATASET_FILE_NOT_FOUND = 0x20 #
-    DATASET_NOT_FOUND = 0x21
+    DATASET_NOT_FOUND_IN_FILE = 0x21
     DATASET_SIZE_NOT_SUPPORTED = 0x22
     QUERY_SIZE_NOT_SUPPORTED = 0x23
     NO_DATASET_LOADED = 0x24
@@ -185,7 +185,10 @@ class Request:
         (self.command, self.k) = struct.unpack_from("=LL", buffer)
             
         # Upnack the 8 character API key, starting at offset 8.
-        self.api_key = struct.unpack_from("=s", buffer, 8)[0:8]
+        # This returns a tuple with one element, so de-reference the tuple.
+        # Python 3 requires the call to 'decode' to convert from bytes to 
+        # string.
+        self.api_key = struct.unpack_from("=8s", buffer, 8)[0].decode()
         
         # Unpack the body length and checksum.
         (self.body_length, self.checksum) = struct.unpack_from("=QL", buffer, 16)
