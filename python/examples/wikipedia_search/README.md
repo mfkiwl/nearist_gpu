@@ -29,9 +29,10 @@ You'll also need:
 
 ## Running the examples
 
-Loading the dataset, both locally and on the remote server, is somewhat time consuming. After loading these files on your first run of the example, set the 'loaded' flag to true in the script, and it will skip the load steps for subsequent runs.
-
 You may run the script within your favorite Python IDE, or, run from a Python terminal with the command ```exec(open("query_wikipedia_live.py").read(), globals())```
+
+### Load once, run multiple times
+Loading the dataset, both locally and on the remote server, is somewhat time consuming. Fortunately, this step doesn't need to be performed on every run of the scripts. After your first run of the example, look for the 'loaded' flag(s) in the script and set these to true, and it will skip the load steps for subsequent runs.
 
 ### Expected Output - query_wikipedia_live
 The following output was generated on an Amazon P2 instance with a single Tesla K80. 
