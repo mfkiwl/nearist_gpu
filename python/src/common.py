@@ -81,7 +81,8 @@ class Request:
     def __init__(self, api_key='', command=None, k=0, body_length=0, body=None):
         """
         The sender will call this constructor and pass in the arguments.
-        The receiver will create the instance with default values, and then unpack the buffer.
+        The receiver will create the instance with default values, and then 
+        unpack the buffer.
         """
 
         self.command = command
@@ -101,8 +102,9 @@ class Request:
         Formats the JSON object into a string to be included in the packet.
         """
         # Use the json module to construct a string representation and add it
-        # to the request.
-        self.body = json.dumps(obj)
+        # to the request. In Python 3, it's required that we explicitly 
+        # convert the string to bytes with 'encode'.
+        self.body = json.dumps(obj).encode()
         self.body_length = len(self.body)
     
     def unpack_json(self):
@@ -167,11 +169,12 @@ class Request:
         
         # Pack the message header.        
         #   'L' is unsigned long (32-bit, 4 bytes)
-        
         buf = struct.pack("=LL", self.command, self.k)
 
         # Add the API key to the header (it's 8 characters, 8 bytes).
-        buf += self.api_key
+        # Python 3 requires that we explicitly convert the string to bytes with
+        # 'encode'.
+        buf += self.api_key.encode()
         
         # 'Q' is unsigned long long (64-bit, 8 bytes)
         buf += struct.pack("=Q", self.body_length)
@@ -241,8 +244,8 @@ class Response:
     how many bytes to receive for the body.
     """
     
-    def __init__(self, command=0, status=Status.SUCCESS, count=0, elapsed=0, body_length=0,
-                 body=None):
+    def __init__(self, command=0, status=Status.SUCCESS, count=0, elapsed=0, 
+                 body_length=0, body=None):
         self.command = command
         self.status = status
         self.count = count
