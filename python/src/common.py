@@ -20,12 +20,8 @@ class Status(IntEnum):
     Statuses returned by the server
     """
     SUCCESS = 0x00
-    INVALID_SEQUENCE = 0x01
-    INVALID_ARGUMENT = 0x02
-    INVALID_PACKET = 0x03
-    NOT_SUPPORTED = 0x04
     INVALID_COMMAND = 0x05
-    INVALID_DATA = 0x06
+    UNKNOWN_METRIC = 0x06
     TIMEOUT = 0x07
     INVALID_CHECKSUM = 0x08
     INVALID_API_KEY = 0x09
@@ -35,7 +31,36 @@ class Status(IntEnum):
     DATASET_SIZE_NOT_SUPPORTED = 0x22
     QUERY_SIZE_NOT_SUPPORTED = 0x23
     NO_DATASET_LOADED = 0x24
+    UNRECOGNIZED_FILE_EXTENSION = 0x25
+    UNKNOWN_DATASET_LOAD_ERROR = 0x26
+    
     UNKNOWN_ERROR = 0xFF
+
+class Common:
+    @staticmethod
+    def receive_all(conn, length):
+        """
+        Helper function to receive 'length' bytes or return None if EOF is hit.
+        """
+
+        data = bytearray()
+    
+        # Loop until we've received 'length' bytes.        
+        while len(data) < length:
+    
+            # Receive the remaining bytes. The amount of data returned might
+            # be less than 'length'.
+            packet = conn.recv(length - len(data))
+    
+            # If we received 0 bytes, the connection has been closed...            
+            if not packet:
+                return None
+    
+            # Append the received bytes to 'data'.    
+            data += packet
+    
+        # Return the 'length' bytes of received data.
+        return data
 
 
 class Request:
