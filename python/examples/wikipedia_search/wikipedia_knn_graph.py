@@ -45,8 +45,8 @@ with c.open(nearist_ip, nearist_port, api_key):
     # ==============================
     #       Load the dataset
     # ==============================
-    # Set the 'loaded' flag to 'True' after the first run of this script so that
-    # you don't have to load anything again.
+    # Set the 'loaded' flag to 'True' after the first run of this script so 
+    # that you don't have to load anything again.
     loaded = True
     if not loaded:
         print('Loading dataset vectors from remote server into GPU...')
@@ -54,7 +54,8 @@ with c.open(nearist_ip, nearist_port, api_key):
         # Load dataset into GPU memory.
         c.load_dataset_file(
             file_name = path_on_nearist_server,  # Remote file path
-            dataset_name = 'lsi'  # Dataset name within HDF5 file
+            dataset_name = 'lsi',  # Dataset name within HDF5 file
+            metric = 'L2'
         )
     
     # ==============================
@@ -84,16 +85,16 @@ with c.open(nearist_ip, nearist_port, api_key):
     # Estimate the time to complete the whole graph in minutes
     est_graph_time = h5f['lsi'].shape[0] / throughput / 60.0
     
-    print('GPU throughput (w/ batch size of %d) is %.0f queries \
-          per second.' % (batch_size, throughput))
-    print('Estimated time to complete the knn graph: \
-          %.0f min\n' % est_graph_time)
+    print('GPU throughput (w/ batch size of %d) is %.0f queries per second.' %
+          (batch_size, throughput))
+    print('Estimated time to complete the knn graph: %.0f min\n' %
+          est_graph_time)
     
     # ==============================
     #      Compute 10-NN graph
     # ==============================
-    print('Running knn-table for %d vectors, batch_size %d, \
-          with k=%d...' % (h5f['lsi'].shape[0], batch_size, k))
+    print('Running knn-table for %d vectors, batch_size %d, with k=%d...' % 
+          (h5f['lsi'].shape[0], batch_size, k))
     sys.stdout.flush()
     
     # Specify the dataset file on the Nearist GPU server to read the query 
