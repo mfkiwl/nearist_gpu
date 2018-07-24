@@ -159,18 +159,30 @@ class GpuClient:
         """
         self.sock.close()
             
-    def load_dataset_file(self, file_name, dataset_name):
+    def load_dataset_file(self, file_name, dataset_name='', metric='L2'):
         """
         Load dataset which is already on the Nearist server hard disk.
         
-        Datasets are uploaded to the Nearist server using FTP, and then can be
-        loaded into GPU memory 
+        Datasets are uploaded to the Nearist server using SFTP, and then can be
+        loaded into GPU memory remotely by this API.
+        
+        Both numpy and HDF5 file formats are supported. Numpy files must end
+        in '.npy' and HDF5 files must end in '.h5'. The 'dataset_name' only 
+        applies to HDF5 files.
+        
+        The metric choices are 'L2' or 'IP' for inner product. L2 is actually
+        the squared L2 distance (which yields the same k-NN ranking as full
+        L2). The inner product is used for cosine similarity; all vectors
+        (dataset and query vectors) should be normalized first.
         
         :type file_name: string
         :param file_name: Path to the dataset file on the Nearist server.
         
         :type dataset_name: string
-        :param dataset_name: Local dataset name
+        :param dataset_name: Dataset name if file is HDF5 format.
+
+        :type metric: string
+        :param metric: 'L2' distance or 'IP' inner product similarity.
 
         """
 
@@ -184,7 +196,12 @@ class GpuClient:
         )
 
         # Send the filename and dataset name as the packet payload.
-        req.pack_json({"fileName": file_name, "datasetName": dataset_name})
+        req.pack_json({
+            "fileName": file_name, 
+            "datasetName": dataset_name,
+            "metric": metric
+            
+        })
         
         # Submit the request (__request handles the response status).
         resp = self.__request(req)
@@ -198,6 +215,15 @@ class GpuClient:
     def query(self, vectors, k=10, batch_size=128, verbose=False):
         """
         Submit a k-nearest neighbor search to the server.
+        
+        The maximum number of neighbors supported by the GPU is 1,024.
+        
+        The 'batch_size' and 'verbose' parameters are intended to help with
+        experiments where you have a very large batch of input queries and need
+        to break it into chunks, such as when running a pre-defined benchmark 
+        like MNIST classification (10,000 query vectors).
+        The 'batch_size' parameter will break the query set into smaller 
+        batches for you, and print progress updates if 'verbose' is true.
         
         :type vectors: numpy.ndarray
         :param vectors: Matrix of query vectors, one per row. 
