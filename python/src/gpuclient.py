@@ -368,13 +368,34 @@ class GpuClient:
         else:
             raise IOError("'vectors' argument has wrong number of dimensions!")
     
-    def query_from_file(self, file_name, dataset_name, k=10, batch_size=1024):
+    def query_from_file(self, file_name, dataset_name='', k=10, batch_size=1024):
         """
         Perform a batch query using query vectors stored in a file on the 
         server.
         
-        #Specify specific query vector IDs in the 'ids' list, or leave it empty
-        #to perform all queries in the file.
+        This can be used, for instance, to compute a k-nn graph on a dataset
+        (i.e., find the 10 nearest neighbors for all vectors in a dataset). 
+        
+        Both numpy and HDF5 file formats are supported. Numpy files must end
+        in '.npy' and HDF5 files must end in '.h5'. The 'dataset_name' only 
+        applies to HDF5 files.
+        
+        The server will break the query vectors into batches of 'batch_size' to
+        avoid memory errors.
+                
+        :type file_name: string
+        :param file_name: Path to the query vectors file on the Nearist server.
+        
+        :type dataset_name: string
+        :param dataset_name: Dataset name if file is HDF5 format.
+
+        :type k: int
+        :param k: Number of neighbors to return for each query.
+        
+        :type batch_size: int
+        :param batch_size: Number of query vectors to submit at a time. 
+
+                
         """
         # Record the start time.
         t0 = time.time()
