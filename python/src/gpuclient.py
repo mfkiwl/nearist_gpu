@@ -382,7 +382,14 @@ class GpuClient:
         
         The server will break the query vectors into batches of 'batch_size' to
         avoid memory errors.
-                
+        
+        In addition to returning the results over the network, the server will
+        also write them to an HDF5 file with the same location and name as the
+        input file, with the suffix '*_results.h5'. This file contains two 
+        datasets named 'distances' and 'indeces' which are the results of the 
+        search. This file can be retrieved from the server in the event of a
+        failed connection during processing.
+        
         :type file_name: string
         :param file_name: Path to the query vectors file on the Nearist server.
         

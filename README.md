@@ -83,3 +83,5 @@ To upload your own dataset vectors to be searched, we provide SFTP (file transfe
 We will provide you with a username, and will need to add your public key to the server's authorized list.
 
 Your account will have limited functionality--SFTP access is enabled but not SSH or SCP. You will be logged into a 'datasets' folder, and are restricted to this directory and those beneath it. There is a `nearist` subdirectory containing pre-built example datasets from Nearist, and a `[company name]` subdirectory where you can upload your own dataset files.
+
+SFTP can also be used to retrieve the results computed by the `query_from_file` function (see this function's header comment for details).
