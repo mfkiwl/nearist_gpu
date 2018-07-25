@@ -52,3 +52,34 @@ The basic commands are:
 
 Additional documentation can be found in the detailed function header comments in [gpuclient.py](https://github.com/nearist/nearist_gpu/blob/master/python/src/gpuclient.py).
 
+## Distance Metrics
+The two supported distance metrics are 'L2' and 'IP'.
+
+The 'L2' distance is technically the squared-L2 distance, meaning that we don't take the final square root step. However, the squared-L2 distance produces identical rankings in k-NN searches.
+
+The 'IP' metric is the inner-product (also called the dot product). 
+
+'IP' can be used to perform k-NN search with Cosine similarity by simply pre-normalizing all vectors. The equation for the cosine similarity between two vectors `a` and `b` is:
+![Equation for cosine similarity](http://mccormickml.com/assets/cosine_l1/cosine_similarity.png)
+
+The following code shows how to normalize a matrix of vectors `X` (containing one vector per row) using NumPy:
+
+```python
+# Calculate the L2-norms for all rows of X.
+l2norms = np.linalg.norm(X, axis=1, ord=2)
+
+# Reshape the norms into a column vector.
+l2norms = l2norms.reshape(len(l2norms), 1)
+
+# Divide all of the row vectors in X by their norms to normalize them.
+X_norm = X / l2norms
+```
+
+Save the normalized version of your dataset and upload it to the GPU server. Then, normalize all query vectors before performing the search.
+
+## Working with your own datasets
+To upload your own dataset vectors to be searched, we provide SFTP (file transfer over SSH) access to the GPU server. 
+
+We will provide you with a username, and will need to add your public key to the server's authorized list.
+
+Your account will have limited functionality--SFTP access is enabled but not SSH or SCP. You will be logged into a 'datasets' folder, and are restricted to this directory and those beneath it. There is a `nearist` subdirectory containing pre-built example datasets from Nearist, and a `[company name]` subdirectory where you can upload your own dataset files.
