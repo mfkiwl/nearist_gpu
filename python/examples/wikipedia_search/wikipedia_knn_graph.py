@@ -17,6 +17,7 @@ nearist_ip = ""
 path_on_nearist_server = "/nearist/Wikipedia/lsi_index_float32.h5"
 path_on_local_drive = "./wiki_data/lsi_index_float32.h5"
 output_on_local_drive = "./wiki_data/lsi_10NN_graph.h5"
+dataset_name = 'lsi'
 
 # Number of queries for the GPU to process at once.
 # The GPU is most efficient when the input batch is sufficiently large. 
@@ -54,7 +55,7 @@ with c.open(nearist_ip, nearist_port, api_key):
         # Load dataset into GPU memory.
         c.load_dataset_file(
             file_name = path_on_nearist_server,  # Remote file path
-            dataset_name = 'lsi',  # Dataset name within HDF5 file
+            dataset_name = dataset_name,  # Dataset name within HDF5 file
             metric = 'L2'
         )
     
@@ -72,7 +73,7 @@ with c.open(nearist_ip, nearist_port, api_key):
     
     # Read the first four batches of the Wikipedia vectors into local 
     # memory.
-    vectors = h5f['lsi'][0:test_batch_size, :]
+    vectors = h5f[dataset_name][0:test_batch_size, :]
     
     # Perform a query on the first four batches.
     dists, idxs = c.query(vectors, k=k, batch_size=batch_size)
@@ -83,7 +84,7 @@ with c.open(nearist_ip, nearist_port, api_key):
     throughput = test_batch_size / c.server_elapsed
     
     # Estimate the time to complete the whole graph in minutes
-    est_graph_time = h5f['lsi'].shape[0] / throughput / 60.0
+    est_graph_time = h5f[dataset_name].shape[0] / throughput / 60.0
     
     print('GPU throughput (w/ batch size of %d) is %.0f queries per second.' %
           (batch_size, throughput))
@@ -94,14 +95,17 @@ with c.open(nearist_ip, nearist_port, api_key):
     #      Compute 10-NN graph
     # ==============================
     print('Running knn-table for %d vectors, batch_size %d, with k=%d...' % 
-          (h5f['lsi'].shape[0], batch_size, k))
+          (h5f[dataset_name].shape[0], batch_size, k))
     sys.stdout.flush()
     
     # Specify the dataset file on the Nearist GPU server to read the query 
     # vectors from.
+    # NOTE: The server will also write the results to a file "*_results.h5" on
+    # the server hard disk which can be retrieved via SFTP. (This is in case
+    # the connection breaks).
     dists, idxs = c.query_from_file(
         file_name = path_on_nearist_server,  # Remote file path
-        dataset_name = 'lsi',                # Dataset name within HDF5 file
+        dataset_name = dataset_name,                # Dataset name within HDF5 file
         k = k,                               # Number of neighbors
         batch_size = batch_size              # Query batch size to use
     )
