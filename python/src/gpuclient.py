@@ -251,6 +251,13 @@ class GpuClient:
         if not type(vectors) == np.ndarray:
             raise IOError("Query vectors should be of type numpy.ndarray")
         
+        # Ensure vectors are type float32 as the server expects.
+        if not vectors.dtype == np.float32:
+            print("WARNING - Vectors are type %s but should be float32." \
+                  " Casting vectors to float32." % str(vectors.dtype))
+            # Cast the vectors float32 if they aren't already.      
+            vectors = vectors.astype('float32')
+        
         # Reset the elapsed time measurements.
         self.server_elapsed = 0
         self.client_elapsed = 0       
